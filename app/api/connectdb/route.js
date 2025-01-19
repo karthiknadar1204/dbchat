@@ -1,29 +1,24 @@
 import { Client } from 'pg';
 import { NextResponse } from 'next/server';
 import { db } from '@/configs/db';
-import { dbConnections, users } from '@/configs/schema';
+import { dbConnections } from '@/configs/schema';
 import { currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
 
 export async function POST(request) {
   try {
-    const clerkUser = await currentUser();
+    const user = await currentUser();
     const { postgresUrl, connectionName } = await request.json();
 
-    const dbUser = await db.query.users.findFirst({
-      where: eq(users.email, clerkUser.emailAddresses[0].emailAddress)
-    });
-
-    if (!dbUser) {
+    if (!postgresUrl) {
       return NextResponse.json(
-        { error: 'User not found in database' },
-        { status: 404 }
+        { error: 'PostgreSQL URL is required' },
+        { status: 400 }
       );
     }
 
-    if (!postgresUrl || !connectionName) {
+    if (!connectionName) {
       return NextResponse.json(
-        { error: 'PostgreSQL URL and connection name are required' },
+        { error: 'Connection name is required' },
         { status: 400 }
       );
     }
@@ -63,9 +58,9 @@ export async function POST(request) {
 
     await client.end();
 
-
+    // Store connection details in database
     await db.insert(dbConnections).values({
-      userId: dbUser.id,
+      userId: user.id,
       connectionName: connectionName,
       postgresUrl: postgresUrl,
       tableSchema: JSON.stringify(tableData.map(t => ({

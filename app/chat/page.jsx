@@ -4,12 +4,14 @@ import React, { useState } from 'react'
 import { Input } from "@/components/ui/input"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRouter } from 'next/navigation'
 
 const page = () => {
   const [url, setUrl] = useState('')
   const [connectionName, setConnectionName] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const validateInputs = () => {
     const postgresUrlRegex = /^postgres(ql)?:\/\/[^\s]+$/
@@ -56,6 +58,7 @@ const page = () => {
 
       const data = await response.json()
       console.log('Connection successful:', data)
+      router.push('/chats')
       
     } catch (err) {
       setError(err.message)

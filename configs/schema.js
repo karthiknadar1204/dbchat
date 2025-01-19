@@ -3,6 +3,7 @@ import { index, pgTable, serial, text, varchar, timestamp, json } from 'drizzle-
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
+  clerkId: varchar('clerk_id', { length: 256 }).notNull().unique(),
   firstName: varchar('first_name', { length: 256 }).notNull(),
   lastName: varchar('last_name', { length: 256 }).notNull(),
   email: varchar('email', { length: 256 }).notNull().unique(),
@@ -13,7 +14,7 @@ export const users = pgTable('users', {
 
 export const dbConnections = pgTable('db_connections', {
   id: serial('id').primaryKey(),
-  userId: serial('user_id').references(() => users.id).notNull(),
+  userId: varchar('user_id', { length: 256 }).references(() => users.clerkId).notNull(),
   connectionName: varchar('connection_name', { length: 256 }).notNull(),
   postgresUrl: text('postgres_url').notNull(),
   tableSchema: json('table_schema').notNull(),
