@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button"
 const page = () => {
   const [url, setUrl] = useState('')
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const validateUrl = () => {
-
     const postgresUrlRegex = /^postgres(ql)?:\/\/[^\s]+$/
     
     if (!url) {
@@ -27,9 +27,31 @@ const page = () => {
     return true
   }
 
-  const handleSubmit = () => {
-    if (validateUrl()) {
-      console.log('Valid PostgreSQL URL:', url)
+  const handleSubmit = async () => {
+    if (!validateUrl()) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/connectdb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ postgresUrl: url }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || 'Failed to connect to database')
+      }
+
+      const data = await response.json()
+      console.log('Connection successful:', data)
+      
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -49,6 +71,7 @@ const page = () => {
             <Button 
               onClick={handleSubmit}
               className="h-12 px-4 bg-green-400 hover:bg-green-500 text-black"
+              disabled={isLoading}
             >
               <ArrowRight className="h-5 w-5" />
             </Button>
