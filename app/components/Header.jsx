@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import Link from 'next/link'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 
 export default function Header() {
   return (
@@ -7,15 +8,34 @@ export default function Header() {
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold text-green-400">SchemaChat</Link>
         <nav>
-          <ul className="flex space-x-4">
+          <ul className="flex space-x-4 items-center">
             <li><Link href="#features" className="hover:text-green-400">Features</Link></li>
             <li><Link href="#how-it-works" className="hover:text-green-400">How it Works</Link></li>
             <li><Link href="#contact" className="hover:text-green-400">Contact</Link></li>
-            <li><Button variant="outline" className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black">Get Started</Button></li>
+            <SignedOut>
+              <li>
+                <SignInButton mode="modal">
+                  <Button variant="outline" className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black">
+                    Sign In
+                  </Button>
+                </SignInButton>
+              </li>
+            </SignedOut>
+            <SignedIn>
+              <li>
+                <Link href="/chat">
+                  <Button variant="outline" className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black mr-4">
+                    Go to Chat
+                  </Button>
+                </Link>
+              </li>
+              <li>
+                <UserButton afterSignOutUrl="/" />
+              </li>
+            </SignedIn>
           </ul>
         </nav>
       </div>
     </header>
   )
 }
-
