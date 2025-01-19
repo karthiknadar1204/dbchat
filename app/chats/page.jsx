@@ -78,7 +78,7 @@ const page = () => {
       console.log('Connection successful:', data)
       await embeddings(data)
       setOpen(false)
-      await fetchChats() // Refetch chats after successful submission
+      await fetchChats()
       router.refresh()
       
     } catch (err) {
