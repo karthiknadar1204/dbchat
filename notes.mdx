@@ -1,4 +1,4 @@
-to check all the tables in a postgresql url we use the following code:
+1) to check all the tables in a postgresql url we use the following code:
 reference:https://www.commandprompt.com/education/postgresql-how-to-list-all-available-tables/
 ```js
 const client = new Client({ connectionString: postgresUrl });
@@ -11,3 +11,21 @@ const result = await client.query(`
 await client.end();
 ```
 testing route:http://localhost:3000/api/connectdb
+
+
+
+2) list all columns from a specified table:
+reference:https://dba.stackexchange.com/questions/22362/list-all-columns-for-a-specified-table
+```js
+const client = new Client({ connectionString: postgresUrl });
+await client.connect();
+const result = await client.query(`
+  SELECT column_name 
+  FROM information_schema.columns 
+  WHERE table_name='your_table_name'
+`);
+await client.end();
+```
+testing route:http://localhost:3000/api/connectdb
+
+

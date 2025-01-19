@@ -14,17 +14,44 @@ export async function POST(request) {
 
     const client = new Client({ connectionString: postgresUrl });
     await client.connect();
-    console.log('Connected to PostgreSQL', client);
 
-    const result = await client.query(`
+
+    const tablesResult = await client.query(`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema='public'
     `);
 
+    const tables = tablesResult.rows;
+    const tableData = [];
+
+
+    for (const table of tables) {
+      const tableName = table.table_name;
+      
+
+      const columnsResult = await client.query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_schema='public' 
+        AND table_name=$1
+      `, [tableName]);
+
+
+      const dataResult = await client.query(`
+        SELECT * FROM "${tableName}" LIMIT 100
+      `);
+
+      tableData.push({
+        tableName,
+        columns: columnsResult.rows,
+        data: dataResult.rows
+      });
+    }
+
     await client.end();
 
-    return NextResponse.json({ tables: result.rows });
+    return NextResponse.json({ tables: tableData });
   } catch (error) {
     return NextResponse.json(
       { error: error.message },
