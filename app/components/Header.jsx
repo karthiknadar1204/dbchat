@@ -10,11 +10,10 @@ export default async function Header() {
   
   if (user) {
     await createOrUpdateUser(user)
-    redirect('/chat')
   }
 
   return (
-    <header className="py-6 px-4 sm:px-6 lg:px-8">
+    <header className="py-6 px-4 sm:px-6 lg:px-8 bg-[#171717] border-b border-white/10">
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold text-green-400">SchemaChat</Link>
         <nav>
