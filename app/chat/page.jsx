@@ -7,14 +7,20 @@ import { Button } from "@/components/ui/button"
 
 const page = () => {
   const [url, setUrl] = useState('')
+  const [connectionName, setConnectionName] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const validateUrl = () => {
+  const validateInputs = () => {
     const postgresUrlRegex = /^postgres(ql)?:\/\/[^\s]+$/
     
     if (!url) {
       setError('Please enter a PostgreSQL URL')
+      return false
+    }
+
+    if (!connectionName) {
+      setError('Please enter a connection name')
       return false
     }
 
@@ -28,7 +34,7 @@ const page = () => {
   }
 
   const handleSubmit = async () => {
-    if (!validateUrl()) return
+    if (!validateInputs()) return
 
     setIsLoading(true)
     try {
@@ -37,7 +43,10 @@ const page = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ postgresUrl: url }),
+        body: JSON.stringify({ 
+          postgresUrl: url,
+          connectionName: connectionName 
+        }),
       })
 
       if (!response.ok) {
@@ -60,6 +69,13 @@ const page = () => {
       <div className="max-w-3xl w-full space-y-4">
         <h2 className="text-xl text-green-400 text-center">Step 1: Add PostgreSQL URL</h2>
         <div className="flex flex-col gap-2">
+          <Input 
+            type="text"
+            value={connectionName}
+            onChange={(e) => setConnectionName(e.target.value)}
+            placeholder="Enter connection name"
+            className="w-full h-12 bg-gray-800 border-2 border-green-400/20 focus:border-green-400 text-white rounded-lg shadow-lg focus:ring-2 focus:ring-green-400/50 focus:ring-offset-2 focus:ring-offset-black"
+          />
           <div className="flex gap-2">
             <Input 
               type="text"
@@ -71,7 +87,7 @@ const page = () => {
             <Button 
               onClick={handleSubmit}
               className="h-12 px-4 bg-green-400 hover:bg-green-500 text-black"
-              disabled={isLoading}
+              disabled={isLoading || !url || !connectionName}
             >
               <ArrowRight className="h-5 w-5" />
             </Button>
