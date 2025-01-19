@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from 'next/navigation'
+import { embeddings } from '../actions/chat'
 
 const page = () => {
   const [url, setUrl] = useState('')

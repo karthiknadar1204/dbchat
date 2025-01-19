@@ -58,8 +58,8 @@ export async function POST(request) {
 
     await client.end();
 
-    // Store connection details in database
-    await db.insert(dbConnections).values({
+    // Store connection details in database and get the new row
+    const [newConnection] = await db.insert(dbConnections).values({
       userId: user.id,
       connectionName: connectionName,
       postgresUrl: postgresUrl,
@@ -71,9 +71,12 @@ export async function POST(request) {
         tableName: t.tableName,
         data: t.data
       })))
-    });
+    }).returning();
 
-    return NextResponse.json({ tables: tableData });
+    return NextResponse.json({ 
+      id: newConnection.id,
+      tables: tableData 
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error.message },

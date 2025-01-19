@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useRouter } from 'next/navigation'
+import { embeddings } from '../actions/chat'
 
 const page = () => {
   const [chats, setChats] = useState([])
@@ -75,6 +76,7 @@ const page = () => {
 
       const data = await response.json()
       console.log('Connection successful:', data)
+      await embeddings(data)
       setOpen(false)
       await fetchChats() // Refetch chats after successful submission
       router.refresh()
