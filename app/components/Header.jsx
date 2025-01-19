@@ -3,13 +3,16 @@ import Link from 'next/link'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 import { createOrUpdateUser } from '@/app/actions/user'
+import { redirect } from 'next/navigation'
 
 export default async function Header() {
   const user = await currentUser()
   
   if (user) {
     await createOrUpdateUser(user)
+    redirect('/chat')
   }
+
   return (
     <header className="py-6 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto flex justify-between items-center">
