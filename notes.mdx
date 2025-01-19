@@ -1,0 +1,12 @@
+to check all the tables in a postgresql url we use the following code:
+reference:https://www.commandprompt.com/education/postgresql-how-to-list-all-available-tables/
+```js
+const client = new Client({ connectionString: postgresUrl });
+await client.connect();
+const result = await client.query(`
+  SELECT table_name 
+  FROM information_schema.tables 
+  WHERE table_schema='public'
+`);
+await client.end();
+```
