@@ -3,6 +3,9 @@
 import { currentUser } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { index } from "@/lib/pinecone";
+import { db } from "@/configs/db";
+import { chatHistory } from "@/configs/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function embeddings(data) {
   const user = await currentUser();
@@ -136,6 +139,79 @@ Keep responses concise and relevant to the database structure being discussed.`,
   } catch (error) {
     console.error("Error in fetchFromEmbeddings:", error);
     throw error;
+  }
+}
+
+export async function saveMessage({ content, role, connectionId }) {
+  const user = await currentUser()
+  if (!user) return null
+
+  try {
+    const newMessage = {
+      content,
+      role,
+      timestamp: new Date().toISOString()
+    }
+
+    const existing = await db
+      .select()
+      .from(chatHistory)
+      .where(
+        and(
+          eq(chatHistory.userId, user.id),
+          eq(chatHistory.connectionId, connectionId)
+        )
+      )
+      .limit(1)
+
+    if (existing.length > 0) {
+      await db
+        .update(chatHistory)
+        .set({
+          messages: [...existing[0].messages, newMessage],
+          updatedAt: new Date()
+        })
+        .where(
+          and(
+            eq(chatHistory.userId, user.id),
+            eq(chatHistory.connectionId, connectionId)
+          )
+        )
+    } else {
+      await db
+        .insert(chatHistory)
+        .values({
+          userId: user.id,
+          connectionId,
+          messages: [newMessage]
+        })
+    }
+  } catch (error) {
+    console.error('Error saving message:', error)
+    throw error
+  }
+}
+
+export async function loadChatHistory(connectionId) {
+  const user = await currentUser()
+  if (!user) return []
+
+  try {
+    const history = await db
+      .select()
+      .from(chatHistory)
+      .where(
+        and(
+          eq(chatHistory.userId, user.id),
+          eq(chatHistory.connectionId, connectionId)
+        )
+      )
+      .limit(1)
+
+    return history[0]?.messages || []
+  } catch (error) {
+    console.error('Error loading chat history:', error)
+    return []
   }
 }
 

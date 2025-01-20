@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { fetchFromEmbeddings } from '@/app/actions/chat'
+import { fetchFromEmbeddings, saveMessage, loadChatHistory } from '@/app/actions/chat'
 import { useParams, useRouter } from 'next/navigation'
 import { Bot, Loader2, Copy, Database, ArrowLeft } from 'lucide-react'
 import { UserButton } from "@clerk/nextjs"
@@ -20,12 +20,13 @@ const page = () => {
   const router = useRouter()
 
   useEffect(() => {
-    const fetchDbLink = async () => {
+    const initializeChat = async () => {
       const link = await getDbLink(params.id)
-      console.log('Database link:', link)
       setDbLink(link)
+      const history = await loadChatHistory(params.id)
+      setMessages(history)
     }
-    fetchDbLink()
+    initializeChat()
   }, [params.id])
 
   const handleSubmit = async () => {
@@ -35,6 +36,13 @@ const page = () => {
       content: message,
       role: 'user'
     }
+    
+    await saveMessage({
+      content: message,
+      role: 'user',
+      connectionId: params.id
+    })
+    
     setMessages(prev => [...prev, userMessage])
     
     const loadingMessage = {
@@ -52,6 +60,12 @@ const page = () => {
         connectionId: params.id
       })
       
+      await saveMessage({
+        content: response,
+        role: 'assistant',
+        connectionId: params.id
+      })
+      
       setMessages(prev => prev.map((msg, index) => {
         if (index === prev.length - 1) {
           return {
@@ -63,7 +77,6 @@ const page = () => {
       }))
     } catch (error) {
       console.error('Error fetching response:', error)
-
       setMessages(prev => prev.slice(0, -1))
     } finally {
       setIsLoading(false)
@@ -77,7 +90,6 @@ const page = () => {
   }
 
   const formatMessage = (content) => {
-    // Handle SQL queries
     if (content.startsWith('```sql')) {
       const sqlQuery = content.replace('```sql\n', '').replace('\n```', '')
       return (
@@ -99,7 +111,7 @@ const page = () => {
       )
     }
 
-    // Handle numbered lists
+
     if (content.match(/^\d+\./m)) {
       const items = content.split(/\n(?=\d+\.)/).filter(Boolean)
       return (
@@ -108,7 +120,7 @@ const page = () => {
             const [number, ...contentParts] = item.split('.')
             const itemContent = contentParts.join('.').trim()
             
-            // Handle nested information with dashes
+
             const subItems = itemContent.split('\n-').filter(Boolean)
             
             return (
@@ -154,13 +166,13 @@ const page = () => {
       )
     }
 
-    // Default text formatting
+
     return <div className="whitespace-pre-wrap">{content}</div>
   }
 
   return (
     <div className="min-h-screen bg-[#262626]">
-      {/* Header Section */}
+
       <div className="fixed top-0 left-0 right-0 bg-[#262626] z-10 px-8 py-4 border-b border-gray-700">
         <div className="flex justify-between items-center max-w-6xl mx-auto">
           <Button

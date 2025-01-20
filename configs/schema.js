@@ -24,3 +24,16 @@ export const dbConnections = pgTable('db_connections', {
 }, (table) => ({
   userIdIdx: index('user_id_idx').on(table.userId)
 }))
+
+export const chatHistory = pgTable('chat_history', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id', { length: 256 }).references(() => users.clerkId).notNull(),
+  connectionId: serial('connection_id').references(() => dbConnections.id).notNull(),
+  messages: json('messages').notNull().default([]),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  userIdIdx: index('chat_history_user_id_idx').on(table.userId),
+  connectionIdIdx: index('chat_history_connection_id_idx').on(table.connectionId),
+  uniqueUserConnection: index('unique_user_connection_idx').on(table.userId, table.connectionId)
+}))

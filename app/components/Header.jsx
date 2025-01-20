@@ -32,7 +32,7 @@ export default async function Header() {
             </SignedOut>
             <SignedIn>
               <li>
-                <Link href="/chat">
+                <Link href="/chats">
                   <Button variant="outline" className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black mr-4">
                     Go to Chat
                   </Button>
