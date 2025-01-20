@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/configs/db'
-import { users } from '@/configs/schema'
+import { users, dbConnections } from '@/configs/schema'
 import { eq } from 'drizzle-orm'
 import { currentUser } from '@clerk/nextjs/server'
 
@@ -15,7 +15,7 @@ export async function createOrUpdateUser() {
     })
 
     if (existingUser) {
-      // Update existing user
+
       await db.update(users)
         .set({
           firstName: clerkUser.firstName,
@@ -28,7 +28,7 @@ export async function createOrUpdateUser() {
       return existingUser
     }
 
-    // Create new user
+
     const newUser = await db.insert(users)
       .values({
         firstName: clerkUser.firstName,
@@ -42,5 +42,23 @@ export async function createOrUpdateUser() {
   } catch (error) {
     console.error('Error creating/updating user:', error)
     throw error
+  }
+}
+
+
+
+
+export async function getDbLink(id) {
+  const user = await db.query.dbConnections.findFirst({
+    where: eq(dbConnections.id, id)
+  })
+
+  console.log("this is the user",user)
+
+  if (!user) return null
+
+  return {
+    postgresUrl: user.postgresUrl,
+    tableSchema: user.tableSchema
   }
 }
