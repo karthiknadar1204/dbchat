@@ -5,27 +5,26 @@ import { dbConnections } from '@/configs/schema';
 import { currentUser } from '@clerk/nextjs/server';
 
 export async function POST(request) {
+  let client;
   try {
     const user = await currentUser();
     const { postgresUrl, connectionName } = await request.json();
 
-    if (!postgresUrl) {
+    if (!postgresUrl || !connectionName) {
       return NextResponse.json(
-        { error: 'PostgreSQL URL is required' },
+        { error: 'PostgreSQL URL and connection name are required' },
         { status: 400 }
       );
     }
 
-    if (!connectionName) {
-      return NextResponse.json(
-        { error: 'Connection name is required' },
-        { status: 400 }
-      );
-    }
-
-    const client = new Client({ connectionString: postgresUrl });
+    client = new Client({ 
+      connectionString: postgresUrl,
+      statement_timeout: 30000,
+      query_timeout: 30000
+    });
     await client.connect();
 
+    // Get all tables
     const tablesResult = await client.query(`
       SELECT table_name 
       FROM information_schema.tables 
@@ -33,41 +32,52 @@ export async function POST(request) {
     `);
 
     const tables = tablesResult.rows;
-    const tableData = [];
+    const CHUNK_SIZE = 5;
+    const tableChunks = chunkArray(tables, CHUNK_SIZE);
+    const allTableData = [];
 
-    for (const table of tables) {
-      const tableName = table.table_name;
-      
-      const columnsResult = await client.query(`
-        SELECT column_name, data_type 
-        FROM information_schema.columns 
-        WHERE table_schema='public' 
-        AND table_name=$1
-      `, [tableName]);
+    // Process tables in chunks
+    for (const chunk of tableChunks) {
+      const chunkPromises = chunk.map(async (table) => {
+        const tableName = table.table_name;
+        
+        const [columnsResult, dataResult] = await Promise.all([
+          client.query(`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_schema='public' 
+            AND table_name=$1
+          `, [tableName]),
+          
+          client.query(`
+            SELECT * FROM "${tableName}" 
+            LIMIT 5
+          `)
+        ]);
 
-      const dataResult = await client.query(`
-        SELECT * FROM "${tableName}" LIMIT 100
-      `);
-
-      tableData.push({
-        tableName,
-        columns: columnsResult.rows,
-        data: dataResult.rows
+        return {
+          tableName,
+          columns: columnsResult.rows,
+          data: dataResult.rows
+        };
       });
+      
+      const chunkResults = await Promise.all(chunkPromises);
+      allTableData.push(...chunkResults);
     }
 
     await client.end();
 
-    // Store connection details in database and get the new row
+    // Store connection details
     const [newConnection] = await db.insert(dbConnections).values({
       userId: user.id,
       connectionName: connectionName,
       postgresUrl: postgresUrl,
-      tableSchema: JSON.stringify(tableData.map(t => ({
+      tableSchema: JSON.stringify(allTableData.map(t => ({
         tableName: t.tableName,
         columns: t.columns
       }))),
-      tableData: JSON.stringify(tableData.map(t => ({
+      tableData: JSON.stringify(allTableData.map(t => ({
         tableName: t.tableName,
         data: t.data
       })))
@@ -75,12 +85,30 @@ export async function POST(request) {
 
     return NextResponse.json({ 
       id: newConnection.id,
-      tables: tableData 
+      tables: allTableData 
     });
+
   } catch (error) {
+    console.error('Database connection error:', error);
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
     );
+  } finally {
+    if (client) {
+      try {
+        await client.end();
+      } catch (e) {
+        console.error('Error closing client:', e);
+      }
+    }
   }
+}
+
+function chunkArray(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
 }
