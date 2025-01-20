@@ -4,7 +4,7 @@ export default function HowItWorks() {
       number: 1,
       title: "Connect Your Database",
       description: "Securely connect your PostgreSQL database with a simple URL",
-      method: "mongodb://your-database-url:27017"
+      method: "postgresql://username:password@localhost:5432/database"
     },
     {
       number: 2, 

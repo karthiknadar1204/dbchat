@@ -14,7 +14,7 @@ export default function Hero() {
           </h1>
           <p className="text-xl sm:text-2xl mb-8 text-[#9ca3af] max-w-full">
             Transform your database queries from complex SQL to simple conversations.
-            Just connect your NoSQL database
+            Just connect your PostgreSQL database
             and start chatting!
           </p>
           <Link href="/chats">
