@@ -83,7 +83,6 @@ export async function fetchFromEmbeddings({ message, connectionId }) {
       input: message,
     });
 
-
     const queryResult = await index.query({
       vector: questionEmbedding.data[0].embedding,
       topK: 10,
@@ -94,13 +93,12 @@ export async function fetchFromEmbeddings({ message, connectionId }) {
       includeValues: true
     });
 
-
-    const schemaInfo = queryResult.matches.find(m => m.metadata.type === 'schema')?.metadata?.schema || "";
-    const dataInfo = queryResult.matches.find(m => m.metadata.type === 'data')?.metadata?.data || "";
+    const schemaInfo = queryResult.matches.find(m => m.metadata.type === 'schema')?.metadata?.schema || "[]";
+    const dataInfo = queryResult.matches.find(m => m.metadata.type === 'data')?.metadata?.data || "[]";
 
     const relevantInfo = {
-      schema: JSON.parse(schemaInfo),
-      sampleData: JSON.parse(dataInfo)
+      schema: JSON.parse(schemaInfo || "[]"),
+      sampleData: JSON.parse(dataInfo || "[]")
     };
 
     const response = await openai.chat.completions.create({
