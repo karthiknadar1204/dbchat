@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import { Plus, ArrowRight, Loader2 } from 'lucide-react'
+import { Plus, ArrowRight, Loader2, ArrowLeft } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -101,7 +101,19 @@ const page = () => {
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-8">
       <div className="flex items-center mb-8">
-        <h1 className="text-3xl font-bold text-white">Chats</h1>
+        <Button
+          onClick={() => router.push('/')}
+          variant="ghost"
+          className="mr-4 hover:bg-transparent p-0"
+        >
+          <ArrowLeft className="h-6 w-6 text-white" />
+        </Button>
+        <h1 
+          className="text-3xl font-bold text-white cursor-pointer hover:text-green-400 transition-colors"
+          onClick={() => router.push('/')}
+        >
+          Chats
+        </h1>
         <div className="ml-auto">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
